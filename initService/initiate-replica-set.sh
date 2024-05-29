@@ -2,8 +2,8 @@
 
 # Function to check if MongoDB is up
 check_mongo() {
-  echo "Checking MongoDB at $MONGO_PRIMARY_HOST:$MONGO_PRIMARY_PORT..."
-  mongo_output=$(mongosh --host "$MONGO_PRIMARY_HOST" --port "$MONGO_PRIMARY_PORT" --eval "db.adminCommand('ping')" 2>&1)
+  echo "Checking MongoDB at $MONGO_PRIMARY_HOST:$MONGO_PORT..."
+  mongo_output=$(mongosh --host "$MONGO_PRIMARY_HOST" --port "$MONGO_PORT" --eval "db.adminCommand('ping')" 2>&1)
   mongo_exit_code=$?
   echo "MongoDB check exit code: $mongo_exit_code"
   echo "MongoDB check output: $mongo_output"
@@ -12,13 +12,13 @@ check_mongo() {
 
 # Function to initiate replica set
 initiate_replica_set() {
-  mongosh --host "$MONGO_PRIMARY_HOST" --port "$MONGO_PRIMARY_PORT" <<EOF
+  mongosh --host "$MONGO_PRIMARY_HOST" --port "$MONGO_PORT" <<EOF
 rs.initiate({
   _id: "$REPLICA_SET_NAME",
   members: [
-    { _id: 0, host: "$MONGO_PRIMARY_HOST:$MONGO_PRIMARY_PORT" },
-    { _id: 1, host: "$MONGO_REPLICA_HOST:$MONGO_REPLICA_PORT" },
-    { _id: 2, host: "$MONGO_REPLICA2_HOST:$MONGO_REPLICA2_PORT" }
+    { _id: 0, host: "$MONGO_PRIMARY_HOST:$MONGO_PORT" },
+    { _id: 1, host: "$MONGO_REPLICA_HOST:$MONGO_PORT" },
+    { _id: 2, host: "$MONGO_REPLICA2_HOST:$MONGO_PORT" }
   ]
 })
 EOF
