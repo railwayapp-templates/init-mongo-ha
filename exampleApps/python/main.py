@@ -49,7 +49,6 @@ async def healthcheck():
     
     if random_doc:
         print("healthcheck successful")
-        print(random_doc[0])
         return {"status": "success", "document": random_doc[0]}
     else:
         print("No documents found")
