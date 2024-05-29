@@ -43,21 +43,21 @@ echo "MongoDB is up. Initiating replica set..."
 
 # Initiate replica set and capture result
 if initiate_replica_set; then
-  echo "Replica set initiated successfully. Executing GraphQL mutation..."
+  echo "Replica set initiated successfully. Executing GraphQL mutation to remove the init service..."
 
-#   # Perform GraphQL API mutation
-#   curl --location "$RAILWAY_API_URL" \
-#     --header 'Content-Type: application/json' \
-#     --header "Authorization: Bearer $RAILWAY_API_TOKEN" \
-#     --data "{\"query\":\"mutation serviceDelete(\$environmentId: String, \$id: String!) { serviceDelete(environmentId: \$environmentId, id: \$id) }\",\"variables\":{\"environmentId\":\"$ENVIRONMENT_ID\",\"id\":\"$SERVICE_ID\"}}"
+  # Perform GraphQL API mutation
+  curl --location "$RAILWAY_API_URL" \
+    --header 'Content-Type: application/json' \
+    --header "Authorization: Bearer $RAILWAY_API_TOKEN" \
+    --data "{\"query\":\"mutation serviceDelete(\$environmentId: String, \$id: String!) { serviceDelete(environmentId: \$environmentId, id: \$id) }\",\"variables\":{\"environmentId\":\"$ENVIRONMENT_ID\",\"id\":\"$SERVICE_ID\"}}"
   
-#   if [ $? -eq 0 ]; then
-#     echo "GraphQL mutation executed successfully."
-#   else
-#     echo "Failed to execute GraphQL mutation."
-#   fi
-# else
-#   echo "Failed to initiate replica set. Please check the MongoDB logs for more information."
+  if [ $? -eq 0 ]; then
+    echo "GraphQL mutation executed successfully."
+  else
+    echo "Failed to delete the service via the API.  Please delete it manually."
+  fi
+else
+  echo "Failed to initiate replica set. Please check the logs for more information."
 fi
 
 exit 0
