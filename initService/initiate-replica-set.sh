@@ -12,6 +12,12 @@ check_mongo() {
 
 # Function to initiate replica set
 initiate_replica_set() {
+  echo "Initiating replica set with the following configuration:"
+  echo "_id: $REPLICA_SET_NAME"
+  echo "Primary member: $MONGO_PRIMARY_HOST:$MONGO_PORT"
+  echo "Replica member 1: $MONGO_REPLICA_HOST:$MONGO_PORT"
+  echo "Replica member 2: $MONGO_REPLICA2_HOST:$MONGO_PORT"
+
   mongosh --host "$MONGO_PRIMARY_HOST" --port "$MONGO_PORT" <<EOF
 rs.initiate({
   _id: "$REPLICA_SET_NAME",
@@ -22,7 +28,9 @@ rs.initiate({
   ]
 })
 EOF
-  return $?
+  init_exit_code=$?
+  echo "Replica set initiation exit code: $init_exit_code"
+  return $init_exit_code
 }
 
 # Poll MongoDB until it's up
@@ -37,19 +45,19 @@ echo "MongoDB is up. Initiating replica set..."
 if initiate_replica_set; then
   echo "Replica set initiated successfully. Executing GraphQL mutation..."
 
-  # Perform GraphQL API mutation
-  curl --location "$RAILWAY_API_URL" \
-    --header 'Content-Type: application/json' \
-    --header "Authorization: Bearer $RAILWAY_API_TOKEN" \
-    --data "{\"query\":\"mutation serviceDelete(\$environmentId: String, \$id: String!) { serviceDelete(environmentId: \$environmentId, id: \$id) }\",\"variables\":{\"environmentId\":\"$ENVIRONMENT_ID\",\"id\":\"$SERVICE_ID\"}}"
+#   # Perform GraphQL API mutation
+#   curl --location "$RAILWAY_API_URL" \
+#     --header 'Content-Type: application/json' \
+#     --header "Authorization: Bearer $RAILWAY_API_TOKEN" \
+#     --data "{\"query\":\"mutation serviceDelete(\$environmentId: String, \$id: String!) { serviceDelete(environmentId: \$environmentId, id: \$id) }\",\"variables\":{\"environmentId\":\"$ENVIRONMENT_ID\",\"id\":\"$SERVICE_ID\"}}"
   
-  if [ $? -eq 0 ]; then
-    echo "GraphQL mutation executed successfully."
-  else
-    echo "Failed to execute GraphQL mutation."
-  fi
-else
-  echo "Failed to initiate replica set. Please check the MongoDB logs for more information."
+#   if [ $? -eq 0 ]; then
+#     echo "GraphQL mutation executed successfully."
+#   else
+#     echo "Failed to execute GraphQL mutation."
+#   fi
+# else
+#   echo "Failed to initiate replica set. Please check the MongoDB logs for more information."
 fi
 
 exit 0
