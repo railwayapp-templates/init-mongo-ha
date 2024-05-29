@@ -1,4 +1,4 @@
-# Dockerfile
+# Base image
 FROM mongo:latest
 
 # Copy the initiation script into the container
