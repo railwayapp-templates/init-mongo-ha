@@ -6,10 +6,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // MongoDB client (for replica set)
-const client = new MongoClient(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-});
+const client = new MongoClient(process.env.MONGO_URI);
 
 let collection;
 
