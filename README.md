@@ -6,6 +6,8 @@ To deploy your own Mongo replica set in Railway, just click the button below!
 
 [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/gFmvuY)
 
+For even more information, check out the tutorial in Railway:  [Deploy and Monitor a MongoDB Replica Set](https://docs.railway.app/tutorials/deploy-and-monitor-mongo)
+
 ### About the Init Service
 The init service is used to execute the required command against MongoDB to initiate the replica set.  Upon completion, it deletes itself via the Railway public API.
 
