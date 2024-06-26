@@ -19,7 +19,7 @@ find_primary() {
   echo "Checking replica set status at $host:$port..."
   rs_status=$(mongosh --quiet --host "$host" --port "$port" --username "$MONGOUSERNAME" --password "$MONGOPASSWORD" --authenticationDatabase "admin" --eval "rs.status()")
   echo "Replica set status: $rs_status"
-  primary_host=$(echo "$rs_status" | awk '/"stateStr" : "PRIMARY"/{getline; getline; getline; getline; getline; getline; print $3}' | tr -d '",')
+  primary_host=$(echo "$rs_status" | awk '/"stateStr" : "PRIMARY"/{flag=1;next} flag && /"name" : /{print $3; exit}' | tr -d '",')
   echo "Primary node is: $primary_host"
   if [ -z "$primary_host" ]; then
     return 1
