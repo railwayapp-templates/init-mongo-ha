@@ -32,11 +32,11 @@ find_primary() {
   PRIMARY_HOST=$(echo "$primary_name_line" | sed "s/.*name: '\([^']*\)'.*/\1/")
   echo "Extracted primary node: $PRIMARY_HOST"
 
-  if [ -z "$primary_host" ]; then
+  if [ -z "$PRIMARY_HOST" ]; then
     echo "Failed to find the primary node."
     return 1
   else
-    echo "Primary node found: $primary_host"
+    echo "Primary node found: $PRIMARY_HOST"
     return 0
   fi
 }
