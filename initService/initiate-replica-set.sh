@@ -17,7 +17,9 @@ find_primary() {
   local host=$1
   local port=$2
   echo "Checking replica set status at $host:$port..."
-  primary_host=$(mongosh --quiet --host "$host" --port "$port" --username "$MONGOUSERNAME" --password "$MONGOPASSWORD" --authenticationDatabase "admin" --eval "rs.status()" | grep '"primary"' | awk -F'"' '{print $4}' | cut -d':' -f1)
+  rs_status=$(mongosh --quiet --host "$host" --port "$port" --username "$MONGO_INITDB_ROOT_USERNAME" --password "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase "admin" --eval "rs.status()")
+  echo "Replica set status: $rs_status"
+  primary_host=$(echo "$rs_status" | grep '"primary"' | awk -F'"' '{print $4}' | cut -d':' -f1)
   echo "Primary node is: $primary_host"
   if [ -z "$primary_host" ]; then
     return 1
