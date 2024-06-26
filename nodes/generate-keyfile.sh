@@ -22,6 +22,7 @@ else
 
   echo "Generating keyfile from environment variable..."
   echo "$KEYFILE" > "$KEYFILE_PATH"
+  chown mongodb:mongodb "$KEYFILE_PATH"
   chmod 600 "$KEYFILE_PATH"
   
   # Debug: Verify keyfile content and permissions
