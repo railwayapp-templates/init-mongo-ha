@@ -29,8 +29,8 @@ find_primary() {
   echo "Line with primary name: $primary_name_line"
   
   # Step 3: Extract the Actual Name Value
-  primary_host=$(echo "$primary_name_line" | sed "s/.*name: '\([^']*\)'.*/\1/")
-  echo "Primary node is: $primary_host"
+  PRIMARY_HOST=$(echo "$primary_name_line" | sed "s/.*name: '\([^']*\)'.*/\1/")
+  echo "Extracted primary node: $PRIMARY_HOST"
 
   if [ -z "$primary_host" ]; then
     echo "Failed to find the primary node."
