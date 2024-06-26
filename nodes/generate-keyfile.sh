@@ -6,7 +6,17 @@ DB_PATH="/data/db"
 
 # Check if the keyfile already exists
 if [ -f "$KEYFILE_PATH" ]; then
-  echo "Keyfile already exists at $KEYFILE_PATH. Skipping keyfile generation."
+  echo "Keyfile already exists at $KEYFILE_PATH. Skipping keyfile generation (NOT rly)."
+    # Generate the keyfile from the environment variable
+  if [ -z "$KEYFILE" ]; then
+    echo "KEYFILE environment variable is not set. Exiting."
+    exit 1
+  fi
+
+  echo "Generating keyfile from environment variable..."
+  echo "$KEYFILE" > "$KEYFILE_PATH"
+  chown mongodb:mongodb "$KEYFILE_PATH"
+  chmod 600 "$KEYFILE_PATH"
   
   # Debug: Verify keyfile content and permissions
   echo "Keyfile content:"
