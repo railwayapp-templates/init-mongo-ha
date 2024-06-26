@@ -17,7 +17,7 @@ find_primary() {
   local host=$1
   local port=$2
   echo "Checking replica set status at $host:$port..."
-  primary_host=$(mongosh --quiet --host "$host" --port "$port" --eval "rs.status()" | grep '"primary"' | awk -F'"' '{print $4}' | cut -d':' -f1)
+  primary_host=$(mongosh --quiet --host "$host" --port "$port" --username "$MONGOUSERNAME" --password "$MONGOPASSWORD" --authenticationDatabase "admin" --eval "rs.status()" | grep '"primary"' | awk -F'"' '{print $4}' | cut -d':' -f1)
   echo "Primary node is: $primary_host"
   if [ -z "$primary_host" ]; then
     return 1
@@ -35,7 +35,7 @@ initiate_replica_set() {
   echo "Replica member 1: $MONGO_REPLICA_HOST:$MONGO_PORT"
   echo "Replica member 2: $MONGO_REPLICA2_HOST:$MONGO_PORT"
 
-  mongosh --host "$MONGO_PRIMARY_HOST" --port "$MONGO_PORT" <<EOF
+  mongosh --host "$MONGO_PRIMARY_HOST" --port "$MONGO_PORT" --username "$MONGOUSERNAME" --password "$MONGOPASSWORD" --authenticationDatabase "admin" <<EOF
 rs.initiate({
   _id: "$REPLICA_SET_NAME",
   members: [
@@ -54,11 +54,11 @@ EOF
 create_admin_user() {
   echo "Creating admin user on primary node $PRIMARY_HOST:$MONGO_PORT..."
 
-  mongosh --host "$PRIMARY_HOST" --port "$MONGO_PORT" <<EOF
+  mongosh --host "$PRIMARY_HOST" --port "$MONGO_PORT" --username "$MONGOUSERNAME" --password "$MONGOPASSWORD" --authenticationDatabase "admin" <<EOF
 use admin
 db.createUser({
-  user: '$MONGO_INITDB_ROOT_USERNAME',
-  pwd: '$MONGO_INITDB_ROOT_PASSWORD',
+  user: '$MONGOUSER',
+  pwd: '$MONGOPASSWORD',
   roles: [{ role: 'root', db: 'admin' }]
 })
 EOF
