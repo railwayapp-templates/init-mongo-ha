@@ -12,7 +12,7 @@ check_mongo() {
   return $mongo_exit_code
 }
 
-# Function to find the primary node
+# Function to find the primary node.. (not used)
 find_primary() {
   local host=$1
   local port=$2
@@ -64,23 +64,6 @@ EOF
   return $init_exit_code
 }
 
-# Function to create an admin user
-create_admin_user() {
-  echo "Creating admin user on primary node $PRIMARY_HOST:$MONGO_PORT..."
-
-  mongosh --host "$PRIMARY_HOST" --port "$MONGO_PORT" --username "$MONGOUSERNAME" --password "$MONGOPASSWORD" --authenticationDatabase "admin" <<EOF
-use admin
-db.createUser({
-  user: '$MONGOUSERNAME',
-  pwd: '$MONGOPASSWORD',
-  roles: [{ role: 'root', db: 'admin' }]
-})
-EOF
-  user_exit_code=$?
-  echo "Admin user creation exit code: $user_exit_code"
-  return $user_exit_code
-}
-
 # Check if the designated primary node is up
 until check_mongo "$MONGO_PRIMARY_HOST" "$MONGO_PORT"; do
   echo "Waiting for MongoDB to be up at $MONGO_PRIMARY_HOST:$MONGO_PORT..."
@@ -92,32 +75,6 @@ echo "MongoDB is up. Initiating replica set..."
 # Initiate replica set and capture result
 if ! initiate_replica_set; then
   echo "Failed to initiate replica set. Please check the logs for more information."
-  exit 1
-fi
-
-# Check and connect to the primary node for further actions, with one retry
-PRIMARY_HOST=""
-for host in "$MONGO_PRIMARY_HOST:$MONGO_PORT" "$MONGO_REPLICA_HOST:$MONGO_PORT" "$MONGO_REPLICA2_HOST:$MONGO_PORT"; do
-  for attempt in 1 2; do
-    if find_primary ${host%:*} ${host#*:}; then
-      echo "Primary node found at $PRIMARY_HOST. Connecting to primary node for further actions..."
-      break 2
-    fi
-    if [ $attempt -eq 1 ]; then
-      echo "Primary node not found. Retrying..."
-      sleep 2
-    fi
-  done
-done
-
-if [ -z "$PRIMARY_HOST" ]; then
-  echo "No primary node found. Exiting."
-  exit 1
-fi
-
-# Create admin user on the primary node
-if ! create_admin_user; then
-  echo "Failed to create admin user. Please check the logs for more information."
   exit 1
 fi
 
