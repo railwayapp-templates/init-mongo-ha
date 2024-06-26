@@ -17,7 +17,7 @@ find_primary() {
   local host=$1
   local port=$2
   echo "Checking replica set status at $host:$port..."
-  rs_status=$(mongosh --quiet --host "$host" --port "$port" --username "$MONGO_USERNAME" --password "$MONGO_PASSWORD" --authenticationDatabase "$AUTH_DB" --eval "rs.status()")
+  rs_status=$(mongosh --quiet --host "$host" --port "$port" --username "$MONGOUSERNAME" --password "$MONGOPASSWORD" --authenticationDatabase "$AUTH_DB" --eval "rs.status()")
   echo "Replica set status: $rs_status"
   
   # Step 1: Find the Line Number of the 'PRIMARY' State
