@@ -7,6 +7,12 @@ DB_PATH="/data/db"
 # Check if the keyfile already exists
 if [ -f "$KEYFILE_PATH" ]; then
   echo "Keyfile already exists at $KEYFILE_PATH. Skipping keyfile generation."
+  
+  # Debug: Verify keyfile content and permissions
+  echo "Keyfile content:"
+  cat "$KEYFILE_PATH"
+  echo "Keyfile permissions:"
+  ls -l "$KEYFILE_PATH"
 else
   # Generate the keyfile from the environment variable
   if [ -z "$KEYFILE" ]; then
