@@ -17,14 +17,26 @@ find_primary() {
   local host=$1
   local port=$2
   echo "Checking replica set status at $host:$port..."
-  rs_status=$(mongosh --quiet --host "$host" --port "$port" --username "$MONGOUSERNAME" --password "$MONGOPASSWORD" --authenticationDatabase "admin" --eval "rs.status()")
+  rs_status=$(mongosh --quiet --host "$host" --port "$port" --username "$MONGO_USERNAME" --password "$MONGO_PASSWORD" --authenticationDatabase "$AUTH_DB" --eval "rs.status()")
   echo "Replica set status: $rs_status"
-  primary_host=$(echo "$rs_status" | awk '/"stateStr" : "PRIMARY"/{flag=1;next} flag && /"name" : /{print $3; exit}' | tr -d '",')
+  
+  # Step 1: Find the Line Number of the 'PRIMARY' State
+  primary_line=$(echo "$rs_status" | awk '/stateStr: .PRIMARY./{print NR}')
+  echo "Line number for PRIMARY state: $primary_line"
+  
+  # Step 2: Look Backwards to Find the Corresponding 'name' Field
+  primary_name_line=$(echo "$rs_status" | awk -v primary_line=$primary_line 'NR<=primary_line && /name/ {print $0; exit}')
+  echo "Line with primary name: $primary_name_line"
+  
+  # Step 3: Extract the Actual Name Value
+  primary_host=$(echo "$primary_name_line" | sed "s/.*name: '\([^']*\)'.*/\1/")
   echo "Primary node is: $primary_host"
+
   if [ -z "$primary_host" ]; then
+    echo "Failed to find the primary node."
     return 1
   else
-    PRIMARY_HOST=$primary_host
+    echo "Primary node found: $primary_host"
     return 0
   fi
 }

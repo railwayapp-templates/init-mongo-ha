@@ -3,3 +3,4 @@ queries/
 package-lock.json
 node_modules/
 test.sh
+rs_status.json
