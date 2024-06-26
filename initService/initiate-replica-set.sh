@@ -57,7 +57,7 @@ create_admin_user() {
   mongosh --host "$PRIMARY_HOST" --port "$MONGO_PORT" --username "$MONGOUSERNAME" --password "$MONGOPASSWORD" --authenticationDatabase "admin" <<EOF
 use admin
 db.createUser({
-  user: '$MONGOUSER',
+  user: '$MONGOUSERNAME',
   pwd: '$MONGOPASSWORD',
   roles: [{ role: 'root', db: 'admin' }]
 })
