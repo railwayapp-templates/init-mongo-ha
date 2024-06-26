@@ -2,12 +2,29 @@
 
 # Function to check if MongoDB is up
 check_mongo() {
-  echo "Checking MongoDB at $MONGO_PRIMARY_HOST:$MONGO_PORT..."
-  mongo_output=$(mongosh --host "$MONGO_PRIMARY_HOST" --port "$MONGO_PORT" --eval "db.adminCommand('ping')" 2>&1)
+  local host=$1
+  local port=$2
+  echo "Checking MongoDB at $host:$port..."
+  mongo_output=$(mongosh --host "$host" --port "$port" --eval "db.adminCommand('ping')" 2>&1)
   mongo_exit_code=$?
   echo "MongoDB check exit code: $mongo_exit_code"
   echo "MongoDB check output: $mongo_output"
   return $mongo_exit_code
+}
+
+# Function to find the primary node
+find_primary() {
+  local host=$1
+  local port=$2
+  echo "Checking replica set status at $host:$port..."
+  primary_host=$(mongosh --quiet --host "$host" --port "$port" --eval "rs.status()" | grep '"primary"' | awk -F'"' '{print $4}' | cut -d':' -f1)
+  echo "Primary node is: $primary_host"
+  if [ -z "$primary_host" ]; then
+    return 1
+  else
+    PRIMARY_HOST=$primary_host
+    return 0
+  fi
 }
 
 # Function to initiate replica set
@@ -33,31 +50,75 @@ EOF
   return $init_exit_code
 }
 
-# Poll MongoDB until it's up
-until check_mongo; do
-  echo "Waiting for MongoDB to be up..."
+# Function to create an admin user
+create_admin_user() {
+  echo "Creating admin user on primary node $PRIMARY_HOST:$MONGO_PORT..."
+
+  mongosh --host "$PRIMARY_HOST" --port "$MONGO_PORT" <<EOF
+use admin
+db.createUser({
+  user: '$MONGO_INITDB_ROOT_USERNAME',
+  pwd: '$MONGO_INITDB_ROOT_PASSWORD',
+  roles: [{ role: 'root', db: 'admin' }]
+})
+EOF
+  user_exit_code=$?
+  echo "Admin user creation exit code: $user_exit_code"
+  return $user_exit_code
+}
+
+# Check if the designated primary node is up
+until check_mongo "$MONGO_PRIMARY_HOST" "$MONGO_PORT"; do
+  echo "Waiting for MongoDB to be up at $MONGO_PRIMARY_HOST:$MONGO_PORT..."
   sleep 2
 done
 
 echo "MongoDB is up. Initiating replica set..."
 
 # Initiate replica set and capture result
-if initiate_replica_set; then
-  echo "Replica set initiated successfully. Executing GraphQL mutation to remove the init service..."
-
-  # Perform GraphQL API mutation
-  curl --location "$RAILWAY_API_URL" \
-    --header 'Content-Type: application/json' \
-    --header "Authorization: Bearer $RAILWAY_API_TOKEN" \
-    --data "{\"query\":\"mutation serviceDelete(\$environmentId: String, \$id: String!) { serviceDelete(environmentId: \$environmentId, id: \$id) }\",\"variables\":{\"environmentId\":\"$ENVIRONMENT_ID\",\"id\":\"$SERVICE_ID\"}}"
-  
-  if [ $? -eq 0 ]; then
-    echo "GraphQL mutation executed successfully."
-  else
-    echo "Failed to delete the service via the API.  Please delete it manually."
-  fi
-else
+if ! initiate_replica_set; then
   echo "Failed to initiate replica set. Please check the logs for more information."
+  exit 1
+fi
+
+# Check and connect to the primary node for further actions, with one retry
+PRIMARY_HOST=""
+for host in "$MONGO_PRIMARY_HOST:$MONGO_PORT" "$MONGO_REPLICA_HOST:$MONGO_PORT" "$MONGO_REPLICA2_HOST:$MONGO_PORT"; do
+  for attempt in 1 2; do
+    if find_primary ${host%:*} ${host#*:}; then
+      echo "Primary node found at $PRIMARY_HOST. Connecting to primary node for further actions..."
+      break 2
+    fi
+    if [ $attempt -eq 1 ]; then
+      echo "Primary node not found. Retrying..."
+      sleep 2
+    fi
+  done
+done
+
+if [ -z "$PRIMARY_HOST" ]; then
+  echo "No primary node found. Exiting."
+  exit 1
+fi
+
+# Create admin user on the primary node
+if ! create_admin_user; then
+  echo "Failed to create admin user. Please check the logs for more information."
+  exit 1
+fi
+
+# Execute GraphQL mutation to remove the init service
+echo "Executing GraphQL mutation to remove the init service..."
+curl --location "$RAILWAY_API_URL" \
+  --header 'Content-Type: application/json' \
+  --header "Authorization: Bearer $RAILWAY_API_TOKEN" \
+  --data "{\"query\":\"mutation serviceDelete(\$environmentId: String, \$id: String!) { serviceDelete(environmentId: \$environmentId, id: \$id) }\",\"variables\":{\"environmentId\":\"$ENVIRONMENT_ID\",\"id\":\"$SERVICE_ID\"}}"
+
+if [ $? -eq 0 ]; then
+  echo "GraphQL mutation executed successfully."
+else
+  echo "Failed to delete the service via the API. Please delete it manually."
+  exit 1
 fi
 
 exit 0
