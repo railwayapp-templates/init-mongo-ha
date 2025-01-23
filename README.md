@@ -4,7 +4,7 @@ This repo contains the script to inititiate a Mongo Replica set deployed in Rail
 
 To deploy your own Mongo replica set in Railway, just click the button below!
 
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/gFmvuY)
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/template/ha-mongo)
 
 For even more information, check out the tutorial in Railway:  [Deploy and Monitor a MongoDB Replica Set](https://docs.railway.app/tutorials/deploy-and-monitor-mongo)
 
